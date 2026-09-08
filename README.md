@@ -357,3 +357,4 @@ Watch it arrive on the device's **Live Data** tab in the /IOTCONNECT console.
 - [RNWF11 Application Developer's Guide](https://onlinedocs.microchip.com/oxy/GUID-209426F5-2F78-4B3F-80A0-AD79A119381E) (AT command reference)
 - [iotc-c-lib](https://github.com/avnet-iotconnect/iotc-c-lib) - /IOTCONNECT's C SDK
 - [iotc-mchp-sama7d65-rnwf11](https://github.com/avnet-iotconnect/iotc-mchp-sama7d65-rnwf11) - another /IOTCONNECT demo using the RNWF11 with Linux host-side TLS instead of on-module
+- [iotc-mchp-dspic33ck-lvmcb](https://github.com/avnet-iotconnect/iotc-mchp-dspic33ck-lvmcb) - a related /IOTCONNECT quickstart for the dsPIC33CK256MP508 Motor Control Starter Kit, using the same RNWF11 add-on board
