@@ -66,7 +66,7 @@ quickstart uses. Pick the block matching your provisioning script choice
 
 ```bash
 mkdir dspic33-rnwf11-quickstart && cd dspic33-rnwf11-quickstart
-RAW=https://raw.githubusercontent.com/avnet-iotconnect/iotc-mchp-dspic33/main
+RAW=https://raw.githubusercontent.com/avnet-iotconnect/iotc-mchp-dspic33-curosity-rnwf11/main
 curl -fsSLO "$RAW/templates/dspic33-rnwf11-quickstart-template.json"
 mkdir bin && curl -fsSL -o bin/dspic33ak512mps512_rnwf11_iotconnect.hex "$RAW/bin/dspic33ak512mps512_rnwf11_iotconnect.hex"
 mkdir tools && cd tools
@@ -88,7 +88,7 @@ cd ..
 ```powershell
 New-Item -ItemType Directory dspic33-rnwf11-quickstart | Out-Null
 Set-Location dspic33-rnwf11-quickstart
-$Raw = "https://raw.githubusercontent.com/avnet-iotconnect/iotc-mchp-dspic33/main"
+$Raw = "https://raw.githubusercontent.com/avnet-iotconnect/iotc-mchp-dspic33-curosity-rnwf11/main"
 Invoke-WebRequest "$Raw/templates/dspic33-rnwf11-quickstart-template.json" -OutFile dspic33-rnwf11-quickstart-template.json
 New-Item -ItemType Directory bin | Out-Null
 Invoke-WebRequest "$Raw/bin/dspic33ak512mps512_rnwf11_iotconnect.hex" -OutFile bin/dspic33ak512mps512_rnwf11_iotconnect.hex
