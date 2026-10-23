@@ -523,7 +523,11 @@ and publishes its status every 10 seconds, which you can watch on the device's *
 
 <img src="media/dashboard.png" width="700"/>
 
-The web dashboard has three panels:
+You can use this AWS-hosted dashboard to drive the rover. Open
+[the dashboard](https://5r6g33fyjc.execute-api.us-east-1.amazonaws.com) and
+sign in with your own /IOTCONNECT solution key, environment, email and password.
+
+The dashboard has three panels:
 
 - The **Drive** panel has a button for each direction (forward, backward, left, right and the four
   diagonals) with labeled **Speed %** and **Time ms** fields underneath each one, plus **Stop**.
@@ -532,11 +536,11 @@ The web dashboard has three panels:
   diagonal wheel pair's speed directly) and `trim`.
 - The **Activity** log lists every command sent.
 
-Sign in with your /IOTCONNECT solution key, environment, email and password.
-To host a version of the dashboard yourself in your own AWS account, see [dashboard/README.md](dashboard/README.md).
-
-The same commands can also be sent from the device's **Commands** tab in the /IOTCONNECT console.
-See [DEVELOPER.md](DEVELOPER.md#2-rover-commands) for the full command reference.
+> [!NOTE]
+> This dashboard is already deployed and hosted, so you don't need an AWS account to use it.
+> To host your own copy, see [dashboard/README.md](dashboard/README.md).
+> The same commands can also be sent from the device's **Commands** tab in the /IOTCONNECT console.
+> See [DEVELOPER.md](DEVELOPER.md#2-rover-commands) for the full command reference.
 
 ### Wheel Direction Test
 
