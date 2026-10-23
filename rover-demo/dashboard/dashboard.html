@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mecanum Rover Dashboard</title>
+<style>
+/* Same palette and theming as the iotc-mchp-dspic33ck-lvmcb dashboard. Dark
+   is the default (a hardware demo is usually viewed in a dim room); light is
+   a manual opt-in via the toggle, remembered in localStorage. */
+:root{
+ --surface-1:#1a1a19;--page:#0d0d0d;--text-primary:#fff;--text-secondary:#c3c2b7;--text-muted:#898781;
+ --grid:#2c2c2a;--border:rgba(255,255,255,.10);
+ --series-1:#3987e5;--good:#0ca30c;--warning:#fab219;--critical:#e66767;
+ color-scheme:dark;
+}
+:root[data-theme="light"]{
+ --surface-1:#fcfcfb;--page:#f9f9f7;--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;
+ --grid:#e1e0d9;--border:rgba(11,11,11,.10);
+ --series-1:#2a78d6;--good:#0ca30c;--warning:#c98a00;--critical:#d03b3b;
+ color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text-primary);
+     font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:18px 16px 50px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.3px;white-space:nowrap}
+.brand .slash{color:var(--series-1);font-weight:700}
+.brand .prod{font-weight:600;color:var(--text-secondary);font-size:.92rem}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0 16px;
+       border-bottom:1px solid var(--border);margin-bottom:16px}
+.spacer{flex:1}
+select{background:var(--surface-1);color:var(--text-primary);border:1px solid var(--border);
+       border-radius:8px;padding:7px 10px;font:inherit;max-width:100%}
+.pill{font-size:.76rem;padding:4px 11px;border-radius:999px;border:1px solid var(--border);
+     background:var(--surface-1);color:var(--text-muted);white-space:nowrap}
+.pill.live{color:var(--good);border-color:var(--good)}
+.pill.dead{color:var(--critical);border-color:var(--critical)}
+button{background:var(--series-1);color:#fff;border:0;border-radius:8px;padding:9px 14px;
+      font:600 .9rem inherit;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.ghost{background:transparent;border:1px solid var(--border);color:var(--text-primary)}
+button.red{background:var(--critical)}
+input{background:var(--page);color:var(--text-primary);border:1px solid var(--border);
+      border-radius:8px;padding:9px 11px;font:inherit;width:100%}
+input:focus{outline:2px solid var(--series-1);outline-offset:1px}
+label{display:block;font-size:.78rem;color:var(--text-secondary);margin:9px 0 4px;font-weight:600}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:.85rem;letter-spacing:.4px;text-transform:uppercase;color:var(--text-secondary)}
+.card .sub{margin:0 0 12px;font-size:.8rem;color:var(--text-muted)}
+.shell{display:grid;gap:14px}.shell>*{min-width:0}
+@media(min-width:1020px){.shell{grid-template-columns:1fr 300px;align-items:start}
+ .rail{position:sticky;top:14px;max-height:calc(100vh - 28px);display:flex;flex-direction:column}}
+/* ---- command cards: a button with its parameter bubbles underneath ---- */
+.pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.adv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.cmd{background:var(--page);border:1px solid var(--border);border-radius:10px;padding:8px;
+     display:flex;flex-direction:column;gap:7px;min-width:0}
+.cmd>button{width:100%;padding:12px 6px;font-size:.92rem}
+.cmd>button .arrow{display:block;font-size:1.35rem;line-height:1.1}
+.cmd.stop{justify-content:center}
+.cmd.stop>button{flex:1;font-size:1rem}
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:6px}
+.param{display:flex;flex-direction:column;gap:2px;min-width:0;margin:0}
+.param span{font-size:.66rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;padding-left:9px;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.param input{border-radius:999px;padding:5px 9px;font-size:.86rem;font-variant-numeric:tabular-nums}
+.hint{font-size:.72rem;color:var(--text-muted);margin:0}
+@media(max-width:520px){.pad{gap:6px}.cmd{padding:6px}.cmd>button{font-size:.8rem;padding:10px 4px}
+ .params{grid-template-columns:1fr}}
+/* ---- misc ---- */
+.log{font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;overflow:auto;color:var(--text-secondary);
+    flex:1;min-height:160px}
+.log div{padding:2px 0;border-bottom:1px solid var(--border)}
+.err{color:var(--critical)}.ok{color:var(--good)}.dim{color:var(--text-muted)}.warn{color:var(--warning)}
+.login{max-width:380px;margin:10vh auto}
+.hidden{display:none}
+footer{margin-top:20px;color:var(--text-muted);font-size:.76rem;text-align:center}
+</style></head><body><div class="wrap">
+
+<div id="loginview" class="login">
+ <div class="brand" style="justify-content:center;margin-bottom:16px;font-size:1.1rem">
+  Avnet<span class="slash">/</span><span>IOTCONNECT</span></div>
+ <p class="dim" style="text-align:center;margin-top:0">This dashboard works with anyone's /IOTCONNECT
+  account. Sign in with your own solution key, environment, email and password.</p>
+ <div class="card">
+  <label for="solkey">Solution key</label><input id="solkey" type="password" autocomplete="off">
+  <label for="ioenv">Environment</label><input id="ioenv" autocomplete="off" placeholder="from Settings → Key Vault">
+  <label for="email">Email</label><input id="email" type="email" autocomplete="username">
+  <label for="password">Password</label><input id="password" type="password" autocomplete="current-password">
+  <label style="display:flex;align-items:center;gap:7px;margin-top:11px;font-weight:400;color:var(--text-secondary)">
+   <input type="checkbox" id="rememberme" style="width:auto"> Remember the solution key/environment on this device
+  </label>
+  <button id="loginbtn" style="width:100%;margin-top:14px">Sign in</button>
+  <div id="loginstatus" style="margin-top:10px;font-size:.85rem"></div>
+  <p class="dim" style="font-size:.76rem;margin-bottom:0">
+   The solution key and your password go straight to this dashboard's own backend over HTTPS, never to a
+   third party. The password is traded once for a session token; the solution key is resent with every
+   request, so it stays in this tab's session storage (or this browser's local storage, if you check the
+   box above) while you're signed in. Use a private window on a shared computer.
+  </p>
+ </div>
+</div>
+
+<div id="dash" class="hidden">
+ <header>
+  <div class="brand">Avnet<span class="slash">/</span><span>IOTCONNECT</span>
+   <span class="prod">&nbsp;&middot; Mecanum rover</span></div>
+  <select id="devsel" title="Rover" autocomplete="off"></select>
+  <span class="pill" id="livepill" title="Live while the rover's last telemetry (sent every 10 s) is under 30 s old">&hellip;</span>
+  <span class="spacer"></span>
+  <button class="ghost" id="themebtn" title="Toggle light/dark">&#9788;</button>
+  <button class="ghost" id="logout">Sign out</button>
+ </header>
+
+ <div class="shell">
+  <div>
+   <div class="card">
+    <h2>Drive</h2>
+    <p class="sub">Each move runs for its time, then the rover stops by itself.
+     Speed is a percent of full speed; time is in milliseconds (up to 10,000).</p>
+    <div class="pad" id="pad"></div>
+   </div>
+
+   <div class="card">
+    <h2>Advanced</h2>
+    <p class="sub">Combine forward and sideways speed, drive each diagonal wheel pair directly,
+     or trim a pair that runs faster than the other (resets to 100/100 when the board restarts).</p>
+    <div class="adv" id="adv"></div>
+   </div>
+
+  </div>
+
+  <div class="rail">
+   <div class="card" style="display:flex;flex-direction:column;flex:1">
+    <h2>Activity</h2>
+    <div class="log" id="log"></div>
+   </div>
+  </div>
+ </div>
+
+ <footer>dsPIC33AK mecanum rover + /IOTCONNECT &middot; checks if the rover is live every 5s</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const PLATFORM="aws"; // the RNWF11 connects straight to an AWS IoT endpoint
+const MAX_MS=10000;   // ROVER_MAX_DURATION_MS in rover/rover.h
+const S={token:null,solutionKey:null,env:null,devices:[],device:null,deviceIndex:null,
+        commands:{},cmdsByTpl:{},poll:null,booting:false};
+
+/* ---------- theme ---------- */
+try{const t=localStorage.getItem("dashTheme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}
+$("themebtn").onclick=()=>{
+ const next=(document.documentElement.getAttribute("data-theme")||"dark")==="dark"?"light":"dark";
+ document.documentElement.setAttribute("data-theme",next);
+ try{localStorage.setItem("dashTheme",next);}catch(e){}
+};
+
+/* ---------- log ---------- */
+function log(m,cls){
+ const d=document.createElement("div");
+ d.innerHTML='<span class="dim">'+new Date().toLocaleTimeString()+'</span> <span class="'+(cls||"")+'">'+m+'</span>';
+ $("log").prepend(d);
+ while($("log").children.length>150)$("log").lastChild.remove();
+}
+
+/* ---------- api ---------- */
+async function api(p,o){
+ o=o||{};o.headers=Object.assign({"Content-Type":"application/json"},o.headers||{});
+ if(S.token)o.headers["Authorization"]="Bearer "+S.token;
+ // The Lambda holds no solution key of its own, so every call needs these.
+ if(S.solutionKey)o.headers["X-Iotc-Solution-Key"]=S.solutionKey;
+ if(S.env)o.headers["X-Iotc-Env"]=S.env;
+ o.headers["X-Iotc-Pf"]=PLATFORM;
+ const r=await fetch("api/dash/"+p,o);
+ const j=await r.json().catch(()=>({error:"bad response"}));
+ if(!r.ok)throw new Error(j.error||("HTTP "+r.status));
+ return j;
+}
+
+/* ---------- auth ----------
+   {token,solutionKey,env} lives in sessionStorage so a page refresh resumes.
+   With "remember" checked, solutionKey/env (never the password or token) are
+   also kept in localStorage, only to pre-fill those two fields next time. */
+try{
+ const r=JSON.parse(localStorage.getItem("dashRemember")||"null");
+ if(r){$("solkey").value=r.solutionKey||"";$("ioenv").value=r.env||"";$("rememberme").checked=true;}
+}catch(e){}
+$("loginbtn").onclick=async()=>{
+ const email=$("email").value.trim(),password=$("password").value;
+ const solutionKey=$("solkey").value.trim(),env=$("ioenv").value.trim();
+ if(!solutionKey||!env){$("loginstatus").innerHTML='<span class="err">Enter your solution key and environment.</span>';return}
+ if(!email||!password){$("loginstatus").innerHTML='<span class="err">Enter your email and password.</span>';return}
+ $("loginbtn").disabled=true;$("loginstatus").innerHTML="Signing in&hellip;";
+ try{
+  const j=await api("login",{method:"POST",body:JSON.stringify({email,password,solutionKey,env,pf:PLATFORM})});
+  S.token=j.token;S.solutionKey=solutionKey;S.env=env;
+  sessionStorage.setItem("dashSession",JSON.stringify({token:S.token,solutionKey,env}));
+  if($("rememberme").checked)localStorage.setItem("dashRemember",JSON.stringify({solutionKey,env}));
+  else localStorage.removeItem("dashRemember");
+  await boot();
+ }catch(e){$("loginstatus").innerHTML='<span class="err">'+esc(e.message)+'</span>';$("loginbtn").disabled=false}
+};
+$("logout").onclick=()=>{sessionStorage.removeItem("dashSession");location.reload()};
+
+async function boot(){
+ // An auto-resumed session and a manual sign-in can both get here while the
+ // slow /bootstrap call is in flight; only the first one may finish, or the
+ // second silently resets the device the user picked in between.
+ if(S.booting)return;
+ S.booting=true;
+ let b;
+ try{b=await api("bootstrap");}
+ catch(e){$("loginstatus").innerHTML='<span class="err">'+esc(e.message)+'</span>';$("loginbtn").disabled=false;S.booting=false;return}
+ if(!b.devices.length){
+  $("loginstatus").innerHTML='<span class="err">No matching device on this account. Check TEMPLATE_GUID '
+   +'in the Lambda if you expected to see one.</span>';
+  $("loginbtn").disabled=false;S.booting=false;return;
+ }
+ S.devices=b.devices;S.cmdsByTpl=b.commandsByTemplate||{};
+ $("devsel").innerHTML=S.devices.map((d,i)=>'<option value="'+i+'">'+esc(d.uniqueId)+'</option>').join("");
+ $("devsel").onchange=()=>selectDevice(+$("devsel").value);
+ $("loginview").classList.add("hidden");$("dash").classList.remove("hidden");
+ log("signed in &mdash; "+S.devices.length+" device(s) available","ok");
+ selectDevice(0);
+ if(!S.poll)S.poll=setInterval(checkLive,5000);
+}
+function selectDevice(i){
+ S.device=S.devices[i];S.deviceIndex=i;S.commands=S.cmdsByTpl[S.device.templateGuid]||{};
+ $("devsel").value=String(i);
+ log("viewing <b>"+esc(S.device.uniqueId)+"</b>","ok");
+ checkLive();
+}
+(async function tryResume(){
+ let sess=null;
+ try{sess=JSON.parse(sessionStorage.getItem("dashSession")||"null");}catch(e){}
+ if(sess&&sess.token&&sess.solutionKey&&sess.env){
+  S.token=sess.token;S.solutionKey=sess.solutionKey;S.env=sess.env;
+  await boot();
+ }
+})();
+
+/* ---------- commands ----------
+   Each entry renders as a button with its parameters as labeled fields
+   underneath. Limits match what the firmware accepts (app/rover_commands.c),
+   so an out-of-range value is caught here instead of in a failed ack this
+   page doesn't read back. Diagonals are "move" with equal forward/sideways
+   parts, so the moving pair runs at the chosen speed. */
+const SPEED={key:"speed",label:"Speed %",min:0,max:100,def:50};
+const TIME={key:"ms",label:"Time ms",min:1,max:MAX_MS,def:1000};
+const half=v=>Math.round(v/2);
+const DIAG=(f,r)=>p=>"move "+(f*half(p.speed))+" "+(r*half(p.speed))+" "+p.ms;
+const PAD=[
+ {label:"Forward-left",arrow:"&#8598;",params:[SPEED,TIME],cmd:"move",build:DIAG(1,-1)},
+ {label:"Forward",arrow:"&#8593;",params:[SPEED,TIME],cmd:"forward",build:p=>"forward "+p.speed+" "+p.ms},
+ {label:"Forward-right",arrow:"&#8599;",params:[SPEED,TIME],cmd:"move",build:DIAG(1,1)},
+ {label:"Left",arrow:"&#8592;",params:[SPEED,TIME],cmd:"left",build:p=>"left "+p.speed+" "+p.ms},
+ {label:"Stop",stop:true,params:[],cmd:"stop",build:()=>"stop"},
+ {label:"Right",arrow:"&#8594;",params:[SPEED,TIME],cmd:"right",build:p=>"right "+p.speed+" "+p.ms},
+ {label:"Backward-left",arrow:"&#8601;",params:[SPEED,TIME],cmd:"move",build:DIAG(-1,-1)},
+ {label:"Backward",arrow:"&#8595;",params:[SPEED,TIME],cmd:"backward",build:p=>"backward "+p.speed+" "+p.ms},
+ {label:"Backward-right",arrow:"&#8600;",params:[SPEED,TIME],cmd:"move",build:DIAG(-1,1)},
+];
+const ADV=[
+ {label:"Move",cmd:"move",params:[{key:"f",label:"Forward %",min:-100,max:100,def:40},
+  {key:"r",label:"Right %",min:-100,max:100,def:40},TIME],build:p=>"move "+p.f+" "+p.r+" "+p.ms},
+ {label:"Wheel pairs",cmd:"pairs",params:[{key:"a",label:"FL+RR %",min:-100,max:100,def:30},
+  {key:"b",label:"FR+RL %",min:-100,max:100,def:0},TIME],build:p=>"pairs "+p.a+" "+p.b+" "+p.ms},
+ {label:"Trim",cmd:"trim",params:[{key:"a",label:"FL+RR %",min:50,max:100,def:100},
+  {key:"b",label:"FR+RL %",min:50,max:100,def:100}],build:p=>"trim "+p.a+" "+p.b},
+];
+
+function renderCommands(list,host){
+ host.innerHTML="";
+ list.forEach(c=>{
+  const card=document.createElement("div");card.className="cmd"+(c.stop?" stop":"");
+  const btn=document.createElement("button");
+  if(c.stop)btn.className="red";
+  btn.innerHTML=(c.arrow?'<span class="arrow">'+c.arrow+'</span>':'')+esc(c.label);
+  card.appendChild(btn);
+  const inputs={};
+  if(c.params.length){
+   const row=document.createElement("div");row.className="params";
+   c.params.forEach(p=>{
+    const id="p"+Math.random().toString(36).slice(2,9);
+    row.insertAdjacentHTML("beforeend",'<label class="param" for="'+id+'"><span>'+esc(p.label)+'</span>'
+     +'<input id="'+id+'" type="number" inputmode="numeric" min="'+p.min+'" max="'+p.max+'" value="'+p.def
+     +'" title="'+p.min+' to '+p.max+'"></label>');
+    inputs[p.key]=()=>$(id);
+   });
+   card.appendChild(row);
+  }else{
+   card.insertAdjacentHTML("beforeend",'<p class="hint">Stops all wheels immediately.</p>');
+  }
+  btn.onclick=()=>withBusy(btn,async()=>{
+   const values={};
+   c.params.forEach(p=>{values[p.key]=requireInt(inputs[p.key]().value,p.min,p.max,c.label+" "+p.label)});
+   await send(c.cmd,c.build(values).slice(c.cmd.length).trim());
+  });
+  host.appendChild(card);
+ });
+}
+function requireInt(value,min,max,label){
+ const s=String(value).trim();
+ if(!/^-?\d+$/.test(s))throw new Error(label+" must be a whole number.");
+ const n=parseInt(s,10);
+ if(n<min||n>max)throw new Error(label+" must be between "+min+" and "+max+".");
+ return n;
+}
+async function send(cmd,value){
+ const guid=S.commands[cmd];
+ if(!guid)throw new Error('command "'+cmd+'" is not in this device\'s template');
+ await api("command",{method:"POST",body:JSON.stringify({deviceGuid:S.device.guid,commandGuid:guid,value:value||""})});
+ log("sent <b>"+esc(cmd)+"</b>"+(value?" "+esc(value):""));
+}
+async function withBusy(btn,fn){
+ btn.disabled=true;const prev=btn.innerHTML;
+ try{await fn();btn.innerHTML="&#10003; sent";setTimeout(()=>{btn.innerHTML=prev;btn.disabled=false},700);}
+ catch(e){btn.innerHTML="failed";log(esc(e.message),"err");setTimeout(()=>{btn.innerHTML=prev;btn.disabled=false},1400);}
+}
+renderCommands(PAD,$("pad"));
+renderCommands(ADV,$("adv"));
+
+/* ---------- live indicator ----------
+   The rover publishes telemetry every 10 s, so it counts as live while its
+   newest message is under 30 s old. */
+async function checkLive(){
+ if(!S.device)return;
+ const forDevice=S.device;
+ const pill=$("livepill");
+ try{
+  const t=await api("telemetry?guid="+encodeURIComponent(forDevice.guid)+"&duid="+encodeURIComponent(forDevice.uniqueId));
+  if(S.device!==forDevice)return; // another device was picked while this was in flight
+  const isLive=t.age_s!==null&&t.age_s!==undefined&&t.age_s<30;
+  pill.textContent=isLive?"live":(t.age_s==null?"no data":"offline "+formatAge(t.age_s));
+  pill.className="pill "+(isLive?"live":"dead");
+ }catch(e){
+  pill.textContent="error";pill.className="pill dead";
+  log(esc(e.message),"err");
+ }
+}
+function formatAge(s){
+ s=Math.round(s);
+ return s<120?s+"s":s<7200?Math.round(s/60)+"m":Math.round(s/3600)+"h";
+}
+
+</script>
+</div></body></html>

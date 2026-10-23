@@ -85,6 +85,7 @@ def main():
     parser.add_argument("--ca-name", default="root-ca", help="CA/root cert filename already uploaded to the RNWF11 (see provision_rnwf11_cert.py; default: root-ca)")
     parser.add_argument("--cert-name", default="device-cert", help="Device cert filename already uploaded to the RNWF11 (default: device-cert)")
     parser.add_argument("--key-name", default="device-key", help="Device private key filename already uploaded to the RNWF11 (default: device-key)")
+    parser.add_argument("--commands", action="store_true", help="Also send the command (C2D) and ack topics, for firmware that receives cloud commands, e.g. the mecanum rover expansion (rover-demo). The basic quickstart firmware rejects them, so leave this off for it")
     args = parser.parse_args()
 
     try:
@@ -97,6 +98,9 @@ def main():
     print(f"Resolved MQTT client ID: {identity.client_id}")
     print(f"Resolved MQTT username: {identity.username or '(none)'}")
     print(f"Resolved telemetry topic: {identity.topics.rpt}")
+    if args.commands:
+        print(f"Resolved command topic: {identity.topics.c2d}")
+        print(f"Resolved ack topic: {identity.topics.ack}")
 
     fields = {
         "WIFI_SSID": args.wifi_ssid,
@@ -118,6 +122,9 @@ def main():
         "RNWF_CERT_NAME": args.cert_name,
         "RNWF_KEY_NAME": args.key_name,
     }
+    if args.commands:
+        fields["MQTT_C2D_TOPIC"] = identity.topics.c2d
+        fields["MQTT_ACK_TOPIC"] = identity.topics.ack
 
     print(f"Connecting to {args.port} at {args.baud} baud...")
     try:

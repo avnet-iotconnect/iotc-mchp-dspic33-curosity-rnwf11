@@ -30,7 +30,7 @@ with AT commands. The demo sends one random-number telemetry value to
 9. [Running the Demo](#9-running-the-demo)
 10. [Resources](#10-resources)
 
-The steps below are in the order you actually need to do them: the device
+The steps below are in the order you actually need to do them. The device
 certificate has to exist before you can create the device in /IOTCONNECT, the
 RNWF11 has to be provisioned with that certificate before it's mounted on
 the Curiosity board, and the firmware has to already be flashed and running
@@ -45,14 +45,14 @@ before the final config-provisioning step can talk to it.
    <img src="media/module-install.png" width="300"/>
 
 2. [RNWF11 UART to Cloud Add-on Board (EV12H55A)](https://www.microchip.com/en-us/development-tool/ev12h55a)
-3. Two USB cables: one for the Curiosity board's onboard debugger/console, one for the RNWF11's own USB-C port (used only during provisioning)
+3. Two USB cables, one for the Curiosity board's onboard debugger/console and one for the RNWF11's own USB-C port (used only during provisioning)
 4. A 2.4 GHz WiFi network and its credentials
 
 ### Software
 
-1. [MPLAB IPE](https://www.microchip.com/mplab/mplab-integrated-programming-environment) (or MPLAB X IDE, which includes it) to flash the pre-built firmware image in [`bin/`](bin/) via the onboard PKOB4 debugger. You only need the full MPLAB X IDE if you're building from source - see [developer.md](developer.md).
-2. `openssl` on your `PATH` (already present on most Linux/macOS systems; on Windows it's included with [Git for Windows](https://git-scm.com/downloads/win), among other sources)
-3. Either Python 3.9+ **or** PowerShell 5.1+ (Windows ships this by default; PowerShell 7+ also works on Linux/macOS) to run the provisioning scripts - pick whichever you're more comfortable with, both do the same thing
+1. [MPLAB IPE](https://www.microchip.com/mplab/mplab-integrated-programming-environment) (or MPLAB X IDE, which includes it) to flash the pre-built firmware image in [`bin/`](bin/) via the onboard PKOB4 debugger. You only need the full MPLAB X IDE if you're building from source - see [DEVELOPER.md](DEVELOPER.md).
+2. `openssl` on your `PATH` (already present on most Linux/macOS systems. On Windows it's included with [Git for Windows](https://git-scm.com/downloads/win), among other sources.)
+3. Either Python 3.9+ **or** PowerShell 5.1+ (Windows ships this by default. PowerShell 7+ also works on Linux/macOS.) to run the provisioning scripts - pick whichever you're more comfortable with, both do the same thing
 4. A serial terminal (PuTTY, Tera Term, MPLAB Data Visualizer's terminal, etc.) to watch the device's console output
 5. An [/IOTCONNECT](https://www.iotconnect.io/) account
 
@@ -81,7 +81,7 @@ cd ..
 > On newer Debian/Ubuntu systems, plain `pip install` may refuse with an
 > "externally-managed-environment" error (PEP 668) - the `--break-system-packages`
 > fallback above handles that. If you'd rather not touch the system Python at
-> all, use a virtual environment instead: `python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`.
+> all, use a virtual environment instead with `python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`.
 
 ### Windows (PowerShell), PowerShell scripts:
 
@@ -262,11 +262,11 @@ After opening the MPLAB IPE:
 
 > [!IMPORTANT]
 > The Curiosity board's single USB-C cable enumerates **two separate serial
-> ports**: one for the PKOB4 programmer/debugger (what MPLAB IPE just used -
-> not a text console), and a completely separate one from an onboard
+> ports**. One is for the PKOB4 programmer/debugger (what MPLAB IPE just used -
+> not a text console), and a completely separate one comes from an onboard
 > MCP2221A USB-UART chip, which is the port this firmware's console
 > actually goes out on. On Linux/macOS, run `ls /dev/serial/by-id/` and look
-> for the entry with "MCP2221" in its name; on Windows, check Device
+> for the entry with "MCP2221" in its name. On Windows, check Device
 > Manager for a second `COMx` port distinct from the PKOB4 one. If you open
 > the wrong port, you'll see nothing at all.
 
@@ -275,7 +275,7 @@ until you complete the next step.
 
 > [!TIP]
 > Modifying the firmware, or just want to build it yourself from source?
-> See [developer.md](developer.md).
+> See [DEVELOPER.md](DEVELOPER.md).
 
 ## 8. Provision WiFi and /IOTCONNECT Config
 
@@ -294,10 +294,10 @@ board enumerates the PKOB4 and MCP2221A ports separately):
 - **Windows**: open Device Manager &rarr; **Ports (COM & LPT)** - look for
   "MCP2221 USB-UART Combo" (or similar) and note its `COMx` number.
 
-Then, in the command below, replace: `MYPORTNAME` with that port;
-`MYWIFINETWORK`/`MYWIFIPASSWORD` with your WiFi credentials (kept in quotes
-since either may contain spaces); `MYCPID` and `MYENVIRONMENT` with the
-values under **Settings &rarr; Key Vault** in the IoTConnect console; and
+Then, in the command below, replace `MYPORTNAME` with that port.
+Replace `MYWIFINETWORK`/`MYWIFIPASSWORD` with your WiFi credentials (kept in quotes
+since either may contain spaces). Replace `MYCPID` and `MYENVIRONMENT` with the
+values under **Settings &rarr; Key Vault** in the IoTConnect console, and
 `MYUNIQUEID` with the **same** Unique ID you used earlier when generating
 the certificate and creating the device (not a new one). The cert/key name
 options don't need to change unless you changed them from the defaults
@@ -349,9 +349,14 @@ Watch it arrive on the device's **Live Data** tab in the /IOTCONNECT console.
 
 <img src="media/live-data.png"/>
 
+> [!TIP]
+> The [Mecanum Rover expansion demo](rover-demo/README.md) uses this same board and RNWF11 to drive a
+> four-wheel mecanum rover from a web dashboard, using /IOTCONNECT commands.
+
 ## 10. Resources
 
-- [developer.md](developer.md) - building from source, project architecture, and how to modify the firmware
+- [DEVELOPER.md](DEVELOPER.md) - building from source, project architecture, and how to modify the firmware
+- [Mecanum Rover expansion demo](rover-demo/README.md) - drives a mecanum rover from /IOTCONNECT commands with this same board
 - [Microchip's dsPIC33A Curiosity OOB Demo](https://github.com/microchip-pic-avr-examples/dspic33a-curiosity-oob)
 - [RNWF11 UART to Cloud Add-on Board User's Guide](https://ww1.microchip.com/downloads/aemDocuments/documents/WSG/ProductDocuments/UserGuides/RNWF11-UART-to-Cloud-Add-on-Board-User-Guide-DS50003638.pdf)
 - [RNWF11 Application Developer's Guide](https://onlinedocs.microchip.com/oxy/GUID-209426F5-2F78-4B3F-80A0-AD79A119381E) (AT command reference)

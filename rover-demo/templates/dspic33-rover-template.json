@@ -1,0 +1,117 @@
+{
+    "code": "dspic33car",
+    "name": "dspic33car",
+    "authType": 2,
+    "attributes": [
+        {
+            "name": "drv",
+            "type": "INTEGER",
+            "description": "Motor driver status: 0 = not responding, 1 = OK, 2 = motor supply (VS) below 3.5V, 3 = driver shut down on a short or overtemperature",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "ta",
+            "type": "INTEGER",
+            "description": "Speed trim of the front-left + rear-right wheel pair, percent of commanded speed (see the trim command)",
+            "unit": "%",
+            "aggregateTypes": []
+        },
+        {
+            "name": "tb",
+            "type": "INTEGER",
+            "description": "Speed trim of the front-right + rear-left wheel pair, percent of commanded speed (see the trim command)",
+            "unit": "%",
+            "aggregateTypes": []
+        },
+        {
+            "name": "cmd",
+            "type": "STRING",
+            "description": "Last command the rover accepted",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "up",
+            "type": "INTEGER",
+            "description": "Seconds since the board last started; drops back to 0 after a reset, e.g. a power brownout",
+            "unit": "s",
+            "aggregateTypes": []
+        }
+    ],
+    "commands": [
+        {
+            "name": "Stop",
+            "command": "stop",
+            "requiredParam": false,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Forward (speed 0-100, optional time ms)",
+            "command": "forward",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Backward (speed 0-100, optional time ms)",
+            "command": "backward",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Strafe Left (speed 0-100, optional time ms)",
+            "command": "left",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Strafe Right (speed 0-100, optional time ms)",
+            "command": "right",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Move (forward right, each -100-100, optional time ms)",
+            "command": "move",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Wheel Pairs (FL+RR FR+RL, each -100-100, optional time ms)",
+            "command": "pairs",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Trim Pair Speeds (FL+RR FR+RL, each 50-100)",
+            "command": "trim",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "Motor Driver Diagnostics (status returned in the ack)",
+            "command": "diag",
+            "requiredParam": false,
+            "requiredAck": true,
+            "isOTACommand": false
+        }
+    ],
+    "messageVersion": "2.1",
+    "capability": "0",
+    "properties": {
+        "description": null,
+        "dataFrequency": "10",
+        "fileSupport": false
+    },
+    "_meta": {
+        "version": "2.0"
+    }
+}

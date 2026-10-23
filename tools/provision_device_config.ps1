@@ -18,7 +18,10 @@ param(
     [ValidateSet("aws", "az")] [string]$Platform = "aws",
     [string]$CaName = "root-ca",
     [string]$CertName = "device-cert",
-    [string]$KeyName = "device-key"
+    [string]$KeyName = "device-key",
+    # Also send the command (C2D) and ack topics, for firmware that receives cloud commands, e.g. the
+    # mecanum rover expansion (rover-demo). The basic quickstart firmware rejects them.
+    [switch]$Commands
 )
 
 $ErrorActionPreference = "Stop"
@@ -83,6 +86,10 @@ Write-Host "Resolved broker host: $($identity.h)"
 Write-Host "Resolved MQTT client ID: $($identity.id)"
 Write-Host "Resolved MQTT username: $(if ($identity.un) { $identity.un } else { '(none)' })"
 Write-Host "Resolved telemetry topic: $($identity.topics.rpt)"
+if ($Commands) {
+    Write-Host "Resolved command topic: $($identity.topics.c2d)"
+    Write-Host "Resolved ack topic: $($identity.topics.ack)"
+}
 
 $fields = [ordered]@{
     WIFI_SSID        = $WifiSsid
@@ -103,6 +110,10 @@ $fields = [ordered]@{
     RNWF_CA_NAME     = $CaName
     RNWF_CERT_NAME   = $CertName
     RNWF_KEY_NAME    = $KeyName
+}
+if ($Commands) {
+    $fields.MQTT_C2D_TOPIC = $identity.topics.c2d
+    $fields.MQTT_ACK_TOPIC = $identity.topics.ack
 }
 
 Write-Host "`nConnecting to $Port at $Baud baud..."
