@@ -63,7 +63,7 @@ It publishes its status (motor driver health, last command, uptime) to /IOTCONNE
 While you set up and test, the Curiosity board runs from your PC's USB port.
 To drive the rover around, power it from one of these instead:
 
-- A portable USB power bank, e.g. the [56800mAh Portable Charger](https://www.amazon.com/dp/B0GQZKGGQH), or
+- A portable USB power bank, e.g. the [Anker 20,000mAh 87W Power Bank](https://www.amazon.com/dp/B0CXDXP8VR), or
 - A stationary 5V USB power supply with at least **2.4A** output, plus a long USB-C cable
 
 > [!IMPORTANT]
